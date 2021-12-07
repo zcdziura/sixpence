@@ -1,8 +1,7 @@
 use std::{
     collections::BTreeSet,
-    fs::{self},
-    path::{Path, PathBuf},
-    str::FromStr,
+    fs,
+    str::FromStr, path::{PathBuf, Path},
 };
 
 use serde::{Deserialize, Serialize};
