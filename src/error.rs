@@ -17,9 +17,10 @@ impl fmt::Display for Error {
             ErrorKind::Io(err) => write!(f, "{}", err),
             ErrorKind::BincodeError(err) => write!(f, "{}", err),
             ErrorKind::AccountType => write!(f, "Invalid account type"),
-            ErrorKind::AccountsFile(msg, err) => {
+            ErrorKind::AccountsFile(msg, err) | ErrorKind::LedgerFile(msg, err) => {
                 write!(f, "{}: {}", msg, err)
-            }
+            },
+			ErrorKind::RecurringPeriod(period) => write!(f, "Invalid recurring period: '{}'. Possible values are: 'onetime', 'weekly', 'biweekly', 'monthly', 'annually'.", period)
         }
     }
 }
@@ -42,4 +43,6 @@ pub enum ErrorKind {
     BincodeError(bincode::Error),
     AccountType,
     AccountsFile(String, std::io::Error),
+    LedgerFile(String, std::io::Error),
+    RecurringPeriod(String),
 }

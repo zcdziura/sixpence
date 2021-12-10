@@ -12,10 +12,11 @@ pub enum AccountOpts {
 #[derive(Debug, StructOpt)]
 pub struct NewAccountOpts {
     /// Name of account; e.g. "Checking Account", "Paycheck", "Electric Bill"
+    #[structopt(short, long)]
     name: String,
 
-    /// Type of account; values (asset, equity, expense, liability, revenue)
-    #[structopt(name = "type")]
+    /// Type of account: [asset | equity | expense | liability | revenue]
+    #[structopt(short = "t", long = "type")]
     account_type: AccountType,
 }
 

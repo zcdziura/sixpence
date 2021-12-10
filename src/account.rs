@@ -1,17 +1,16 @@
 use std::{
     collections::BTreeSet,
     fs,
-    str::FromStr, path::{PathBuf, Path},
+    path::{Path, PathBuf},
+    str::FromStr,
 };
 
 use serde::{Deserialize, Serialize};
-use ulid::Ulid;
 
 use crate::error::{Error, ErrorKind};
 
-#[derive(Debug, Deserialize, Eq, Ord, PartialOrd, Serialize)]
+#[derive(Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
 pub struct Account {
-    id: Ulid,
     name: String,
     account_type: AccountType,
 }
@@ -19,16 +18,17 @@ pub struct Account {
 impl Account {
     pub fn new(name: &str, account_type: AccountType) -> Self {
         Self {
-            id: Ulid::new(),
             name: String::from(name),
             account_type,
         }
     }
-}
 
-impl PartialEq for Account {
-    fn eq(&self, other: &Self) -> bool {
-        self.name == other.name && self.account_type == other.account_type
+    pub fn name(&self) -> &String {
+        &self.name
+    }
+
+    pub fn account_type(&self) -> &AccountType {
+        &self.account_type
     }
 }
 
@@ -71,7 +71,7 @@ pub fn create_new_account(
     Ok(())
 }
 
-fn read_accounts_from_file(path: &Path) -> Result<BTreeSet<Account>, Error> {
+pub fn read_accounts_from_file(path: &Path) -> Result<BTreeSet<Account>, Error> {
     let buffer = fs::read(path)?;
     let deencoded_buffer: Vec<Account> = if buffer.is_empty() {
         Vec::new()

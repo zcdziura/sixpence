@@ -1,9 +1,11 @@
 mod account;
 mod error;
 mod opts;
+mod transaction;
 
 use account::create_new_account;
-use opts::{AccountOpts, Commands, Opts};
+use opts::{transaction::TransactionOpts, AccountOpts, Commands, Opts};
+use transaction::validate_new_transaction_opts;
 
 #[paw::main]
 fn main(args: Opts) {
@@ -31,6 +33,11 @@ fn main(args: Opts) {
                         std::process::exit(2);
                     }
                 }
+            }
+        },
+        Commands::Transaction(opts) => match opts {
+            TransactionOpts::NewTransaction(new_transaction_opts) => {
+                validate_new_transaction_opts(accounts_file, new_transaction_opts)
             }
         },
     }
