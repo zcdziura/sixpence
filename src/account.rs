@@ -16,15 +16,15 @@ pub struct Account {
 }
 
 impl Account {
-    pub fn new(name: &str, account_type: AccountType) -> Self {
+    pub fn new(name: String, account_type: AccountType) -> Self {
         Self {
-            name: String::from(name),
+            name,
             account_type,
         }
     }
 
-    pub fn name(&self) -> &String {
-        &self.name
+    pub fn name(&self) -> String {
+        self.name.clone()
     }
 
     pub fn account_type(&self) -> &AccountType {
@@ -58,14 +58,13 @@ impl FromStr for AccountType {
 
 pub fn create_new_account(
     path: PathBuf,
-    name: &str,
+    name: String,
     account_type: AccountType,
 ) -> Result<(), Error> {
     let mut accounts = read_accounts_from_file(path.as_path())?;
     let new_account = Account::new(name, account_type);
-
     accounts.insert(new_account);
-    dbg!(&accounts);
+
     save_accounts_to_file(path.as_path(), accounts)?;
 
     Ok(())

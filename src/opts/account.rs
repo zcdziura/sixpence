@@ -21,8 +21,8 @@ pub struct NewAccountOpts {
 }
 
 impl NewAccountOpts {
-    pub fn name(&self) -> &str {
-        self.name.as_str()
+    pub fn name(&self) -> String {
+        self.name.clone()
     }
 
     pub fn account_type(&self) -> AccountType {

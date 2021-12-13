@@ -37,7 +37,7 @@ fn main(args: Opts) {
         },
         Commands::Transaction(opts) => match opts {
             TransactionOpts::NewTransaction(new_transaction_opts) => {
-                validate_new_transaction_opts(accounts_file, new_transaction_opts)
+                validate_new_transaction_opts(accounts_file, new_transaction_opts);
             }
         },
     }

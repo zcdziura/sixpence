@@ -5,7 +5,10 @@ pub type Error = Box<ErrorKind>;
 impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match &**self {
-            ErrorKind::Io(err) | ErrorKind::AccountsFile(_, err) => err.source(),
+            ErrorKind::Io(err)
+            | ErrorKind::AccountsFile(_, err)
+            | ErrorKind::LedgerFile(_, err) => err.source(),
+            ErrorKind::BincodeError(err) => err.source(),
             _ => None,
         }
     }
@@ -20,7 +23,9 @@ impl fmt::Display for Error {
             ErrorKind::AccountsFile(msg, err) | ErrorKind::LedgerFile(msg, err) => {
                 write!(f, "{}: {}", msg, err)
             },
-			ErrorKind::RecurringPeriod(period) => write!(f, "Invalid recurring period: '{}'. Possible values are: 'onetime', 'weekly', 'biweekly', 'monthly', 'annually'.", period)
+			ErrorKind::RecurringPeriod(period) => write!(f, "Invalid recurring period: '{}'. Possible values are: 'onetime', 'weekly', 'biweekly', 'monthly', 'annually'.", period),
+            ErrorKind::UnknownAccount(account) => write!(f, "Unknown account: {}.", account),
+            ErrorKind::UnbalancedTransaction(debits, credits) => write!(f, "Transaction has unbalanced values; debits: {}, credits: {}.", debits, credits),
         }
     }
 }
@@ -39,10 +44,12 @@ impl From<bincode::Error> for Error {
 
 #[derive(Debug)]
 pub enum ErrorKind {
-    Io(std::io::Error),
-    BincodeError(bincode::Error),
     AccountType,
     AccountsFile(String, std::io::Error),
+    BincodeError(bincode::Error),
+    Io(std::io::Error),
     LedgerFile(String, std::io::Error),
     RecurringPeriod(String),
+    UnknownAccount(String),
+    UnbalancedTransaction(isize, isize),
 }
