@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{rc::Rc, str::FromStr};
 
 use structopt::StructOpt;
 
@@ -31,19 +31,23 @@ pub struct NewTransactionOpts {
 }
 
 impl NewTransactionOpts {
-    pub fn debits(&self) -> Vec<(&String, &isize)> {
-        self.accounts
-            .iter()
-            .zip(self.values.iter())
-            .filter(|(_, value)| **value > 0)
-            .collect()
+    pub fn debits(&self) -> Vec<(Rc<String>, isize)> {
+        self.filter_accounts_by(|(_, value)| *value >= 0)
     }
 
-    pub fn credits(&self) -> Vec<(&String, &isize)> {
+    pub fn credits(&self) -> Vec<(Rc<String>, isize)> {
+        self.filter_accounts_by(|(_, value)| *value < 0)
+    }
+
+    fn filter_accounts_by<F>(&self, predicate: F) -> Vec<(Rc<String>, isize)>
+    where
+        F: FnMut(&(Rc<String>, isize)) -> bool,
+    {
         self.accounts
             .iter()
-            .zip(self.values.iter())
-            .filter(|(_, value)| **value < 0)
+            .map(|account| Rc::new(account.to_string()))
+            .zip(self.values.iter().map(|value| *value))
+            .filter(predicate)
             .collect()
     }
 }

@@ -1,8 +1,7 @@
 use std::{
-    collections::BTreeSet,
     fs,
     path::{Path, PathBuf},
-    str::FromStr,
+    str::FromStr, rc::Rc, collections::BTreeSet,
 };
 
 use serde::{Deserialize, Serialize};
@@ -11,19 +10,16 @@ use crate::error::{Error, ErrorKind};
 
 #[derive(Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
 pub struct Account {
-    name: String,
+    name: Rc<String>,
     account_type: AccountType,
 }
 
 impl Account {
     pub fn new(name: String, account_type: AccountType) -> Self {
-        Self {
-            name,
-            account_type,
-        }
+        Self { name: Rc::new(name), account_type }
     }
 
-    pub fn name(&self) -> String {
+    pub fn name(&self) -> Rc<String> {
         self.name.clone()
     }
 
@@ -65,7 +61,8 @@ pub fn create_new_account(
     let new_account = Account::new(name, account_type);
     accounts.insert(new_account);
 
-    save_accounts_to_file(path.as_path(), accounts)?;
+    let accounts_vec = accounts.into_iter().collect::<Vec<_>>();
+    save_accounts_to_file(path.as_path(), accounts_vec.as_slice())?;
 
     Ok(())
 }
@@ -77,14 +74,12 @@ pub fn read_accounts_from_file(path: &Path) -> Result<BTreeSet<Account>, Error> 
     } else {
         bincode::deserialize(&buffer[..])?
     };
-
-    Ok(BTreeSet::from_iter(deencoded_buffer.into_iter()))
+    
+    Ok(deencoded_buffer.into_iter().collect::<BTreeSet<_>>())
 }
 
-fn save_accounts_to_file(path: &Path, accounts: BTreeSet<Account>) -> Result<(), Error> {
-    let accounts: Vec<Account> = accounts.into_iter().collect();
-
-    let buffer = bincode::serialize(&accounts[..])?;
+fn save_accounts_to_file(path: &Path, accounts: &[Account]) -> Result<(), Error> {
+    let buffer = bincode::serialize(accounts)?;
     let _ = fs::write(path, buffer)?;
 
     Ok(())
