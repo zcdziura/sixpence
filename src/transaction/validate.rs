@@ -1,4 +1,4 @@
-use std::{collections::BTreeSet, ops::Neg, path::PathBuf, rc::Rc};
+use std::{collections::HashSet, ops::Neg, path::PathBuf, rc::Rc};
 
 use crate::{
     account::read_accounts_from_file,
@@ -10,34 +10,38 @@ pub fn validate_new_transaction_opts(
     accounts_file_path: PathBuf,
     opts: &NewTransactionOpts,
 ) -> Result<(), Error> {
-    let accounts_in_transaction = extract_accounts_in_transaction(opts);
+    let (debits, credits) = opts.categorize_accounts_and_values()?;
+    let accounts_in_transaction = get_account_names(&debits, &credits);
     let saved_accounts = load_saved_accounts(&accounts_file_path)?;
     validate_accounts_exist(&saved_accounts, &accounts_in_transaction)?;
 
-    let (total_debits, total_credits) = extract_total_debits_and_credits(opts);
+    let (total_debits, total_credits) = extract_total_debits_and_credits(&debits, &credits);
     validate_values_balance(total_debits, total_credits)?;
 
     Ok(())
 }
 
-fn extract_accounts_in_transaction(opts: &NewTransactionOpts) -> BTreeSet<Rc<String>> {
-    opts.debits()
+fn get_account_names(
+    debits: &[(Rc<String>, isize)],
+    credits: &[(Rc<String>, isize)],
+) -> HashSet<Rc<String>> {
+    debits
         .iter()
         .map(|pair| pair.0.clone())
-        .chain(opts.credits().iter().map(|pair| pair.0.clone()))
-        .collect::<BTreeSet<_>>()
+        .chain(credits.iter().map(|pair| pair.0.clone()))
+        .collect::<HashSet<_>>()
 }
 
-fn load_saved_accounts(accounts_file_path: &PathBuf) -> Result<BTreeSet<Rc<String>>, Error> {
+fn load_saved_accounts(accounts_file_path: &PathBuf) -> Result<HashSet<Rc<String>>, Error> {
     Ok(read_accounts_from_file(accounts_file_path)?
         .into_iter()
         .map(|account| account.name())
-        .collect::<BTreeSet<_>>())
+        .collect::<HashSet<_>>())
 }
 
 fn validate_accounts_exist(
-    existing_accounts: &BTreeSet<Rc<String>>,
-    accounts: &BTreeSet<Rc<String>>,
+    existing_accounts: &HashSet<Rc<String>>,
+    accounts: &HashSet<Rc<String>>,
 ) -> Result<(), Error> {
     if accounts.is_subset(existing_accounts) {
         Ok(())
@@ -53,11 +57,14 @@ fn validate_accounts_exist(
     }
 }
 
-fn extract_total_debits_and_credits(opts: &NewTransactionOpts) -> (isize, isize) {
-    opts.debits()
+fn extract_total_debits_and_credits(
+    debits: &[(Rc<String>, isize)],
+    credits: &[(Rc<String>, isize)],
+) -> (isize, isize) {
+    debits
         .into_iter()
-        .zip(opts.credits().into_iter())
-        .map(|((_, debit_val), (_, credit_val))| (debit_val, credit_val))
+        .map(|pair| pair.1)
+        .zip(credits.into_iter().map(|pair| pair.1))
         .fold(
             (0_isize, 0_isize),
             |(acc_debit_val, acc_credit_val), (cur_debit_val, cur_credit_val): (isize, isize)| {

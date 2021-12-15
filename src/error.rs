@@ -26,6 +26,10 @@ impl fmt::Display for Error {
 			ErrorKind::RecurringPeriod(period) => write!(f, "Invalid recurring period: '{}'. Possible values are: 'onetime', 'weekly', 'biweekly', 'monthly', 'annually'.", period),
             ErrorKind::UnknownAccount(account) => write!(f, "Unknown account: {}.", account),
             ErrorKind::UnbalancedTransaction(debits, credits) => write!(f, "Transaction has unbalanced values; debits: {}, credits: {}.", debits, credits),
+            ErrorKind::AccountsWithoutValue(accounts) => {
+                let accounts = accounts.join(", ");
+                write!(f, "Transaction has accounts listed without any associated values: {}.", accounts)
+            }
         }
     }
 }
@@ -42,6 +46,15 @@ impl From<bincode::Error> for Error {
     }
 }
 
+impl Into<i32> for Error {
+    fn into(self) -> i32 {
+        match *self {
+            ErrorKind::AccountsFile(_, _) => 1,
+            _ => unimplemented!()
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum ErrorKind {
     AccountType,
@@ -52,4 +65,5 @@ pub enum ErrorKind {
     RecurringPeriod(String),
     UnknownAccount(String),
     UnbalancedTransaction(isize, isize),
+    AccountsWithoutValue(Vec<String>),
 }

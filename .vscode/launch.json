@@ -6,7 +6,7 @@
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceRoot}/target/debug/sixp.exe",
-            "args": [],
+            "args": ["txn", "new", "-a", "Capital One", "-v", "1234.56", "-a", "Checking Account"],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",
             "environment": [],

@@ -1,7 +1,9 @@
 use std::{
+    collections::BTreeSet,
     fs,
     path::{Path, PathBuf},
-    str::FromStr, rc::Rc, collections::BTreeSet,
+    rc::Rc,
+    str::FromStr,
 };
 
 use serde::{Deserialize, Serialize};
@@ -16,7 +18,10 @@ pub struct Account {
 
 impl Account {
     pub fn new(name: String, account_type: AccountType) -> Self {
-        Self { name: Rc::new(name), account_type }
+        Self {
+            name: Rc::new(name),
+            account_type,
+        }
     }
 
     pub fn name(&self) -> Rc<String> {
@@ -74,7 +79,7 @@ pub fn read_accounts_from_file(path: &Path) -> Result<BTreeSet<Account>, Error> 
     } else {
         bincode::deserialize(&buffer[..])?
     };
-    
+
     Ok(deencoded_buffer.into_iter().collect::<BTreeSet<_>>())
 }
 

@@ -11,9 +11,9 @@ use transaction::validate_new_transaction_opts;
 fn main(args: Opts) {
     let accounts_file = match args.accounts_file() {
         Ok(file) => file,
-        Err(err) => {
-            eprintln!("{}", err);
-            std::process::exit(1);
+        Err(error) => {
+            eprintln!("{}", error);
+            std::process::exit(error.into());
         }
     };
 
@@ -30,14 +30,21 @@ fn main(args: Opts) {
                     Ok(_) => {}
                     Err(error) => {
                         eprintln!("{}", error);
-                        std::process::exit(2);
+                        std::process::exit(error.into());
                     }
                 }
             }
         },
         Commands::Transaction(opts) => match opts {
             TransactionOpts::NewTransaction(new_transaction_opts) => {
-                validate_new_transaction_opts(accounts_file, new_transaction_opts);
+                let result = validate_new_transaction_opts(accounts_file, new_transaction_opts);
+                match result {
+                    Ok(_) => {}
+                    Err(error) => {
+                        eprintln!("{}", error);
+                        std::process::exit(error.into());
+                    }
+                }
             }
         },
     }
