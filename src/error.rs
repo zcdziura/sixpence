@@ -5,9 +5,7 @@ pub type Error = Box<ErrorKind>;
 impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match &**self {
-            ErrorKind::Io(err)
-            | ErrorKind::AccountsFile(_, err)
-            | ErrorKind::LedgerFile(_, err) => err.source(),
+            ErrorKind::Io(err) | ErrorKind::DataFile(_, err) => err.source(),
             ErrorKind::BincodeError(err) => err.source(),
             _ => None,
         }
@@ -20,7 +18,7 @@ impl fmt::Display for Error {
             ErrorKind::Io(err) => write!(f, "{}", err),
             ErrorKind::BincodeError(err) => write!(f, "{}", err),
             ErrorKind::AccountType => write!(f, "Invalid account type"),
-            ErrorKind::AccountsFile(msg, err) | ErrorKind::LedgerFile(msg, err) => {
+            ErrorKind::DataFile(msg, err) => {
                 write!(f, "{}: {}", msg, err)
             },
 			ErrorKind::RecurringPeriod(period) => write!(f, "Invalid recurring period: '{}'. Possible values are: 'onetime', 'weekly', 'biweekly', 'monthly', 'annually'.", period),
@@ -49,8 +47,14 @@ impl From<bincode::Error> for Error {
 impl Into<i32> for Error {
     fn into(self) -> i32 {
         match *self {
-            ErrorKind::AccountsFile(_, _) => 1,
-            _ => unimplemented!()
+            ErrorKind::AccountType => 1,
+            ErrorKind::DataFile(_, _) => 2,
+            ErrorKind::AccountsWithoutValue(_) => 3,
+            ErrorKind::BincodeError(_) => 4,
+            ErrorKind::Io(_) => 5,
+            ErrorKind::RecurringPeriod(_) => 6,
+            ErrorKind::UnbalancedTransaction(_, _) => 7,
+            ErrorKind::UnknownAccount(_) => 8,
         }
     }
 }
@@ -58,12 +62,11 @@ impl Into<i32> for Error {
 #[derive(Debug)]
 pub enum ErrorKind {
     AccountType,
-    AccountsFile(String, std::io::Error),
+    DataFile(String, std::io::Error),
+    AccountsWithoutValue(Vec<String>),
     BincodeError(bincode::Error),
     Io(std::io::Error),
-    LedgerFile(String, std::io::Error),
     RecurringPeriod(String),
-    UnknownAccount(String),
     UnbalancedTransaction(isize, isize),
-    AccountsWithoutValue(Vec<String>),
+    UnknownAccount(String),
 }

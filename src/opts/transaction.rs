@@ -31,6 +31,10 @@ pub struct NewTransactionOpts {
 }
 
 impl NewTransactionOpts {
+    pub fn recurring_period(&self) -> RecurringPeriod {
+        self.recurring_period
+    }
+
     pub fn categorize_accounts_and_values(
         &self,
     ) -> Result<(Vec<(Rc<String>, isize)>, Vec<(Rc<String>, isize)>), Error> {
@@ -95,7 +99,7 @@ impl NewTransactionOpts {
     }
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Clone, Copy, Debug, StructOpt)]
 pub enum RecurringPeriod {
     OneTime,
     Weekly,

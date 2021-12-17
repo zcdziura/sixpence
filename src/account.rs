@@ -1,10 +1,4 @@
-use std::{
-    collections::BTreeSet,
-    fs,
-    path::{Path, PathBuf},
-    rc::Rc,
-    str::FromStr,
-};
+use std::{collections::BTreeSet, fs, path::Path, rc::Rc, str::FromStr};
 
 use serde::{Deserialize, Serialize};
 
@@ -26,10 +20,6 @@ impl Account {
 
     pub fn name(&self) -> Rc<String> {
         self.name.clone()
-    }
-
-    pub fn account_type(&self) -> &AccountType {
-        &self.account_type
     }
 }
 
@@ -58,16 +48,16 @@ impl FromStr for AccountType {
 }
 
 pub fn create_new_account(
-    path: PathBuf,
+    path: &Path,
     name: String,
     account_type: AccountType,
 ) -> Result<(), Error> {
-    let mut accounts = read_accounts_from_file(path.as_path())?;
+    let mut accounts = read_accounts_from_file(path)?;
     let new_account = Account::new(name, account_type);
     accounts.insert(new_account);
 
     let accounts_vec = accounts.into_iter().collect::<Vec<_>>();
-    save_accounts_to_file(path.as_path(), accounts_vec.as_slice())?;
+    save_accounts_to_file(path, accounts_vec.as_slice())?;
 
     Ok(())
 }

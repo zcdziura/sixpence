@@ -1,24 +1,31 @@
-use std::{collections::HashSet, ops::Neg, path::PathBuf, rc::Rc};
+use std::{collections::HashSet, ops::Neg, path::Path, rc::Rc};
 
 use crate::{
     account::read_accounts_from_file,
     error::{Error, ErrorKind},
-    opts::transaction::NewTransactionOpts,
+    opts::transaction::{NewTransactionOpts, RecurringPeriod},
 };
 
 pub fn validate_new_transaction_opts(
-    accounts_file_path: PathBuf,
+    accounts_file_path: &Path,
     opts: &NewTransactionOpts,
-) -> Result<(), Error> {
+) -> Result<
+    (
+        Vec<(Rc<String>, isize)>,
+        Vec<(Rc<String>, isize)>,
+        RecurringPeriod,
+    ),
+    Error,
+> {
     let (debits, credits) = opts.categorize_accounts_and_values()?;
     let accounts_in_transaction = get_account_names(&debits, &credits);
-    let saved_accounts = load_saved_accounts(&accounts_file_path)?;
+    let saved_accounts = load_saved_accounts(accounts_file_path)?;
     validate_accounts_exist(&saved_accounts, &accounts_in_transaction)?;
 
     let (total_debits, total_credits) = extract_total_debits_and_credits(&debits, &credits);
     validate_values_balance(total_debits, total_credits)?;
 
-    Ok(())
+    Ok((debits, credits, opts.recurring_period()))
 }
 
 fn get_account_names(
@@ -32,7 +39,7 @@ fn get_account_names(
         .collect::<HashSet<_>>()
 }
 
-fn load_saved_accounts(accounts_file_path: &PathBuf) -> Result<HashSet<Rc<String>>, Error> {
+fn load_saved_accounts(accounts_file_path: &Path) -> Result<HashSet<Rc<String>>, Error> {
     Ok(read_accounts_from_file(accounts_file_path)?
         .into_iter()
         .map(|account| account.name())
