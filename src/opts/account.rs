@@ -7,6 +7,10 @@ pub enum AccountOpts {
     /// Create a new account
     #[structopt(name = "new")]
     NewAccount(NewAccountOpts),
+
+    /// List all saved accounts
+    #[structopt(name = "list")]
+    ListAccounts(ListAccountOpts),
 }
 
 #[derive(Debug, StructOpt)]
@@ -26,6 +30,19 @@ impl NewAccountOpts {
     }
 
     pub fn account_type(&self) -> AccountType {
+        self.account_type
+    }
+}
+
+#[derive(Debug, StructOpt)]
+pub struct ListAccountOpts {
+    /// Filter by account type: [asset | equity | expense | liability | revenue]
+    #[structopt(short = "t", long = "type")]
+    account_type: Option<AccountType>,
+}
+
+impl ListAccountOpts {
+    pub fn account_type(&self) -> Option<AccountType> {
         self.account_type
     }
 }

@@ -5,7 +5,7 @@ mod transaction;
 
 use std::process;
 
-use account::create_new_account;
+use account::{create_new_account, list_accounts};
 use opts::{transaction::TransactionOpts, AccountOpts, Commands, Opts};
 use transaction::create_new_transaction;
 
@@ -40,7 +40,18 @@ fn main(args: Opts) {
                     Ok(_) => {}
                     Err(error) => {
                         eprintln!("{}", error);
-                        std::process::exit(error.into());
+                        process::exit(error.into());
+                    }
+                }
+            }
+            AccountOpts::ListAccounts(opts) => {
+                let result = list_accounts(accounts_file.as_path(), opts.account_type());
+
+                match result {
+                    Ok(_) => {}
+                    Err(error) => {
+                        eprintln!("{}", error);
+                        process::exit(error.into());
                     }
                 }
             }
@@ -57,7 +68,7 @@ fn main(args: Opts) {
                     Ok(_) => {}
                     Err(error) => {
                         eprintln!("{}", error);
-                        std::process::exit(error.into());
+                        process::exit(error.into());
                     }
                 }
             }
