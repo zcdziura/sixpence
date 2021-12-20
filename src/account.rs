@@ -118,3 +118,8 @@ pub fn list_accounts(path: &Path, account_type: Option<AccountType>) -> Result<(
 
     Ok(())
 }
+
+pub fn edit_account(account_name: &str, new_name: Option<&str>, new_account_type: Option<AccountType>) -> Result<(), Error> {
+
+	Ok(())
+}

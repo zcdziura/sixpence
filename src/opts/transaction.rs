@@ -10,7 +10,7 @@ pub enum TransactionOpts {
     /// Create a new transaction
     #[structopt(
         name = "new",
-        usage = "sixp txn new -a [credit] -v=[negative value] -a [debit] -v=[positive value]"
+        usage = "sixp txn new -a [credit] [negative value] -a [debit] [positive value]"
     )]
     NewTransaction(NewTransactionOpts),
 }

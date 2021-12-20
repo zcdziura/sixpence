@@ -5,7 +5,7 @@ mod transaction;
 
 use std::process;
 
-use account::{create_new_account, list_accounts};
+use account::{create_new_account, list_accounts, edit_account};
 use opts::{transaction::TransactionOpts, AccountOpts, Commands, Opts};
 use transaction::create_new_transaction;
 
@@ -55,6 +55,17 @@ fn main(args: Opts) {
                     }
                 }
             }
+			AccountOpts::EditAccount(opts) => {
+				let result = edit_account(opts.name(), opts.new_name(), opts.new_account_type());
+
+				match result {
+					Ok(_) => {},
+					Err(error) => {
+						eprintln!("{}", error);
+						process::exit(error.into());
+					}
+				}
+			}
         },
         Commands::Transaction(opts) => match opts {
             TransactionOpts::NewTransaction(new_transaction_opts) => {
