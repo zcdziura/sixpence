@@ -1,5 +1,4 @@
-pub mod account;
-pub mod transaction;
+use structopt::StructOpt;
 
 use std::{
     fs::{DirBuilder, File},
@@ -7,13 +6,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use platform_dirs::AppDirs;
-use structopt::StructOpt;
-
 use crate::error::{Error, ErrorKind};
+use platform_dirs::AppDirs;
 
-pub use self::account::AccountOpts;
-use self::transaction::TransactionOpts;
+use super::{account::AccountOpts, transaction::TransactionOpts};
 
 #[derive(Debug, StructOpt)]
 pub struct Opts {
