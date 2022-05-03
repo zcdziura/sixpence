@@ -6,7 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::error::{Error, ErrorKind};
+use crate::error::Error;
 use platform_dirs::AppDirs;
 
 use super::{account::AccountOpts, transaction::TransactionOpts};
@@ -51,10 +51,10 @@ fn create_data_file_if_not_exists(
 
     if !path.exists() {
         create_full_file_path(path.as_path()).map_err(|error| {
-            Box::new(ErrorKind::DataFile(
+            Error::data_file(
                 format!("Unable to create data file: {}.", default_file_name),
                 error,
-            ))
+            )
         })?;
     }
 

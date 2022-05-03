@@ -7,7 +7,7 @@ use std::{path::Path, rc::Rc, str::FromStr};
 
 use serde::{Deserialize, Serialize};
 
-use crate::error::{Error, ErrorKind};
+use crate::error::Error;
 
 pub use display::display_accounts;
 pub use filter::filter_accounts_by_account_type;
@@ -69,7 +69,7 @@ impl FromStr for AccountType {
             "expense" => Ok(Self::Expense),
             "liability" => Ok(Self::Liability),
             "revenue" => Ok(Self::Revenue),
-            _ => Err(Error::from(ErrorKind::AccountType)),
+            _ => Err(Error::account_type()),
         }
     }
 }

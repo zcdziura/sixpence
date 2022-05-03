@@ -2,7 +2,7 @@ use std::{collections::HashSet, iter, ops::Neg, rc::Rc, str::FromStr};
 
 use structopt::StructOpt;
 
-use crate::error::{Error, ErrorKind};
+use crate::error::Error;
 
 #[derive(Debug, StructOpt)]
 #[structopt(global_setting = structopt::clap::AppSettings::AllowNegativeNumbers)]
@@ -57,9 +57,7 @@ impl NewTransactionOpts {
                 .map(|pair| Rc::try_unwrap(pair.0).unwrap())
                 .collect::<Vec<_>>();
 
-            return Err(Box::new(ErrorKind::AccountsWithoutValue(
-                accounts_without_value,
-            )));
+            return Err(Error::accounts_without_value(accounts_without_value));
         }
 
         let account = remaining_accounts_without_value.pop().unwrap().0.clone();
@@ -124,7 +122,7 @@ impl FromStr for RecurringPeriod {
             "biweekly" => Ok(Self::BiWeekly),
             "monthly" => Ok(Self::Monthly),
             "annually" => Ok(Self::Annually),
-            _ => Err(Box::new(ErrorKind::RecurringPeriod(s.to_string()))),
+            _ => Err(Error::recurring_period(s)),
         }
     }
 }

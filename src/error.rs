@@ -1,10 +1,55 @@
 use std::{error, fmt};
 
-pub type Error = Box<ErrorKind>;
+#[derive(Debug)]
+pub struct Error {
+    kind: ErrorKind,
+}
+
+impl Error {
+    pub fn account_type() -> Self {
+        let kind = ErrorKind::AccountType;
+        Self { kind }
+    }
+
+    pub fn accounts_without_value(accounts: Vec<String>) -> Self {
+        let kind = ErrorKind::AccountsWithoutValue(accounts);
+        Self { kind }
+    }
+
+    pub fn data_file(message: String, error: std::io::Error) -> Self {
+        let kind = ErrorKind::DataFile(message, error);
+        Self { kind }
+    }
+
+    pub fn recurring_period(period: &str) -> Self {
+        let kind = ErrorKind::RecurringPeriod(period.to_string());
+        Self { kind }
+    }
+
+    pub fn unbalanced_transaction(debits: isize, credits: isize) -> Self {
+        let kind = ErrorKind::UnbalancedTransaction(debits, credits);
+        Self { kind }
+    }
+
+    pub fn unknown_account(account: &str) -> Self {
+        let kind = ErrorKind::UnknownAccount(account.to_string());
+        Self { kind }
+    }
+
+    fn io(inner: std::io::Error) -> Self {
+        let kind = ErrorKind::Io(inner);
+        Self { kind }
+    }
+
+    fn bincode(inner: bincode::Error) -> Self {
+        let kind = ErrorKind::BincodeError(inner);
+        Self { kind }
+    }
+}
 
 impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        match &**self {
+        match &self.kind {
             ErrorKind::Io(err) | ErrorKind::DataFile(_, err) => err.source(),
             ErrorKind::BincodeError(err) => err.source(),
             _ => None,
@@ -14,7 +59,7 @@ impl error::Error for Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match &**self {
+        match &self.kind {
             ErrorKind::Io(err) => write!(f, "{}", err),
             ErrorKind::BincodeError(err) => write!(f, "{}", err),
             ErrorKind::AccountType => write!(f, "Invalid account type"),
@@ -34,19 +79,19 @@ impl fmt::Display for Error {
 
 impl From<std::io::Error> for Error {
     fn from(error: std::io::Error) -> Self {
-        Box::new(ErrorKind::Io(error))
+        Self::io(error)
     }
 }
 
 impl From<bincode::Error> for Error {
     fn from(error: bincode::Error) -> Self {
-        Box::new(ErrorKind::BincodeError(error))
+        Self::bincode(error)
     }
 }
 
 impl Into<i32> for Error {
     fn into(self) -> i32 {
-        match *self {
+        match self.kind {
             ErrorKind::AccountType => 1,
             ErrorKind::DataFile(_, _) => 2,
             ErrorKind::AccountsWithoutValue(_) => 3,

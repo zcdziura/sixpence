@@ -2,7 +2,7 @@ use std::{collections::HashSet, ops::Neg, path::Path, rc::Rc};
 
 use crate::{
     account::read_accounts_from_file,
-    error::{Error, ErrorKind},
+    error::Error,
     opts::transaction::{NewTransactionOpts, RecurringPeriod},
 };
 
@@ -59,8 +59,9 @@ fn validate_accounts_exist(
             .collect::<Vec<_>>()
             .first()
             .unwrap()
-            .to_string();
-        Err(Box::new(ErrorKind::UnknownAccount(difference)))
+            .as_str();
+
+        Err(Error::unknown_account(difference))
     }
 }
 
@@ -98,9 +99,6 @@ fn validate_values_balance(total_debits: isize, total_credits: isize) -> Result<
 
     match total_debits + total_credits {
         0 => Ok(()),
-        _ => Err(Box::new(ErrorKind::UnbalancedTransaction(
-            total_debits,
-            total_credits,
-        ))),
+        _ => Err(Error::unbalanced_transaction(total_debits, total_credits)),
     }
 }
