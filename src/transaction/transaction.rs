@@ -4,8 +4,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    args_old::transaction::{self as transaction_opts, NewTransactionOpts},
     error::Error,
-    opts::transaction::{self as transaction_opts, NewTransactionOpts},
 };
 
 use super::{save_transaction, validate_new_transaction_opts};
@@ -48,7 +48,7 @@ impl Default for RecurringPeriod {
     }
 }
 
-impl From<crate::opts::transaction::RecurringPeriod> for RecurringPeriod {
+impl From<crate::args_old::transaction::RecurringPeriod> for RecurringPeriod {
     fn from(other: transaction_opts::RecurringPeriod) -> Self {
         match other {
             transaction_opts::RecurringPeriod::OneTime => Self::OneTime,

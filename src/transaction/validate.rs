@@ -2,8 +2,8 @@ use std::{collections::HashSet, ops::Neg, path::Path, rc::Rc};
 
 use crate::{
     account::read_accounts_from_file,
+    args_old::transaction::{NewTransactionOpts, RecurringPeriod},
     error::Error,
-    opts::transaction::{NewTransactionOpts, RecurringPeriod},
 };
 
 pub fn validate_new_transaction_opts(
