@@ -1,48 +1,30 @@
 use std::{error, fmt};
 
+use ErrorKind::*;
+
 #[derive(Debug)]
 pub struct Error {
     kind: ErrorKind,
 }
 
 impl Error {
-    pub fn account_type() -> Self {
-        let kind = ErrorKind::AccountType;
-        Self { kind }
+    pub fn ledger_file_not_found() -> Self {
+        Self::new(LedgerFileNotFound)
     }
 
-    pub fn accounts_without_value(accounts: Vec<String>) -> Self {
-        let kind = ErrorKind::AccountsWithoutValue(accounts);
-        Self { kind }
+    pub fn bincode(inner: bincode::Error) -> Self {
+        Self::new(BincodeError(inner))
     }
 
-    pub fn data_file(message: String, error: std::io::Error) -> Self {
-        let kind = ErrorKind::DataFile(message, error);
-        Self { kind }
+    pub fn corrupted_ledger_file() -> Self {
+        Self::new(CorruptedLedgerFile)
     }
 
-    pub fn recurring_period(period: &str) -> Self {
-        let kind = ErrorKind::RecurringPeriod(period.to_string());
-        Self { kind }
+    pub fn io(inner: std::io::Error) -> Self {
+        Self::new(Io(inner))
     }
 
-    pub fn unbalanced_transaction(debits: isize, credits: isize) -> Self {
-        let kind = ErrorKind::UnbalancedTransaction(debits, credits);
-        Self { kind }
-    }
-
-    pub fn unknown_account(account: &str) -> Self {
-        let kind = ErrorKind::UnknownAccount(account.to_string());
-        Self { kind }
-    }
-
-    fn io(inner: std::io::Error) -> Self {
-        let kind = ErrorKind::Io(inner);
-        Self { kind }
-    }
-
-    fn bincode(inner: bincode::Error) -> Self {
-        let kind = ErrorKind::BincodeError(inner);
+    fn new(kind: ErrorKind) -> Self {
         Self { kind }
     }
 }
@@ -50,8 +32,8 @@ impl Error {
 impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match &self.kind {
-            ErrorKind::Io(err) | ErrorKind::DataFile(_, err) => err.source(),
-            ErrorKind::BincodeError(err) => err.source(),
+            BincodeError(err) => err.source(),
+            Io(err) => err.source(),
             _ => None,
         }
     }
@@ -60,19 +42,10 @@ impl error::Error for Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.kind {
-            ErrorKind::Io(err) => write!(f, "{}", err),
-            ErrorKind::BincodeError(err) => write!(f, "{}", err),
-            ErrorKind::AccountType => write!(f, "Invalid account type"),
-            ErrorKind::DataFile(msg, err) => {
-                write!(f, "{}: {}", msg, err)
-            },
-			ErrorKind::RecurringPeriod(period) => write!(f, "Invalid recurring period: '{}'. Possible values are: 'onetime', 'weekly', 'biweekly', 'monthly', 'annually'.", period),
-            ErrorKind::UnknownAccount(account) => write!(f, "Unknown account: {}.", account),
-            ErrorKind::UnbalancedTransaction(debits, credits) => write!(f, "Transaction has unbalanced values; debits: {}, credits: {}.", debits, credits),
-            ErrorKind::AccountsWithoutValue(accounts) => {
-                let accounts = accounts.join(", ");
-                write!(f, "Transaction has accounts listed without any associated values: {}.", accounts)
-            }
+            BincodeError(err) => write!(f, "{}", err),
+            CorruptedLedgerFile => write!(f, "Ledger file contains corrupted data."),
+            Io(err) => write!(f, "{}", err),
+            LedgerFileNotFound => write!(f, "Ledger file not found."),
         }
     }
 }
@@ -80,6 +53,12 @@ impl fmt::Display for Error {
 impl From<std::io::Error> for Error {
     fn from(error: std::io::Error) -> Self {
         Self::io(error)
+    }
+}
+
+impl From<&std::io::Error> for Error {
+    fn from(error: &std::io::Error) -> Self {
+        Self::io(std::io::Error::from(error.kind()))
     }
 }
 
@@ -92,26 +71,18 @@ impl From<bincode::Error> for Error {
 impl Into<i32> for Error {
     fn into(self) -> i32 {
         match self.kind {
-            ErrorKind::AccountType => 1,
-            ErrorKind::DataFile(_, _) => 2,
-            ErrorKind::AccountsWithoutValue(_) => 3,
-            ErrorKind::BincodeError(_) => 4,
-            ErrorKind::Io(_) => 5,
-            ErrorKind::RecurringPeriod(_) => 6,
-            ErrorKind::UnbalancedTransaction(_, _) => 7,
-            ErrorKind::UnknownAccount(_) => 8,
+            BincodeError(_) => 1,
+            CorruptedLedgerFile => 2,
+            Io(_) => 3,
+            LedgerFileNotFound => 4,
         }
     }
 }
 
 #[derive(Debug)]
 pub enum ErrorKind {
-    AccountType,
-    DataFile(String, std::io::Error),
-    AccountsWithoutValue(Vec<String>),
     BincodeError(bincode::Error),
+    CorruptedLedgerFile,
     Io(std::io::Error),
-    RecurringPeriod(String),
-    UnbalancedTransaction(isize, isize),
-    UnknownAccount(String),
+    LedgerFileNotFound,
 }

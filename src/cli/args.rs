@@ -1,44 +1,30 @@
-use std::{
-    fs::{DirBuilder, File},
-    io,
-    path::{Path, PathBuf},
-};
+use std::path::PathBuf;
 
 use clap::{Args, ValueHint};
-use platform_dirs::AppDirs;
 
 use crate::error::Error;
 
 #[derive(Args, Debug)]
 pub struct GlobalArgs {
     /// Specify an alternate ledger file
-    #[clap(short, long = "ledger", value_name = "FILE", value_hint = ValueHint::DirPath)]
+    #[clap(short = 'f', long = "file", value_name = "PATH", value_hint = ValueHint::DirPath, global = true)]
     ledger_file: Option<PathBuf>,
 }
 
 impl GlobalArgs {
     pub fn ledger_file(&self) -> Result<PathBuf, Error> {
-        let path = match self.ledger_file.as_ref() {
-            Some(path) => {
-                if !path.exists() {
-                    create_full_file_path(path.as_path())?
-                } else {
-                    path.clone()
-                }
-            }
-            None => AppDirs::new(Some(env!("CARGO_PKG_NAME")), true)
-                .map(|app_dirs| app_dirs.data_dir.as_path().join("ledger.dat"))
-                .unwrap(),
-        };
-
-        Ok(path)
+        match self.ledger_file.as_ref() {
+            Some(path) => match path.exists() {
+                true => Ok(path.clone()),
+                false => Err(Error::ledger_file_not_found()),
+            },
+            None => Ok(dirs::data_local_dir()
+                .map(|dir| {
+                    let mut dir = dir;
+                    dir.push(env!("CARGO_PKG_NAME"));
+                    dir
+                })
+                .unwrap()),
+        }
     }
-}
-
-fn create_full_file_path(path: &Path) -> io::Result<PathBuf> {
-    let parent_dir = path.parent().unwrap();
-    let _ = DirBuilder::new().recursive(true).create(parent_dir)?;
-    let _ = File::create(path)?;
-
-    Ok(PathBuf::from(path))
 }

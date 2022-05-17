@@ -2,22 +2,16 @@ use std::process;
 
 use clap::Parser;
 use cli::Cli;
+use ledger::Ledger;
 
 // mod account;
 mod cli;
 mod error;
+mod ledger;
 // mod transaction;
 
 fn main() {
     let cli = Cli::parse();
-
-    let ledger_file = match cli.global_args().ledger_file() {
-        Ok(ledger_file) => ledger_file,
-        Err(err) => {
-            eprintln!("{}", err);
-            process::exit(err.into())
-        }
-    };
 
     // let accounts_file = match args_old.accounts_file() {
     //     Ok(file) => file,
