@@ -19,10 +19,11 @@ impl GlobalArgs {
                 false => Err(Error::ledger_file_not_found(path)),
             },
             None => Ok(dirs::data_local_dir()
-                .map(|dir| {
-                    let mut dir = dir;
-                    dir.push(format!("{}/ledger.dat", env!("CARGO_PKG_NAME")));
-                    dir
+                .map(|path| {
+                    let mut path = path;
+					path.push(env!("CARGO_PKG_NAME"));
+                    path.push("ledger.dat");
+                    path
                 })
                 .unwrap()),
         }

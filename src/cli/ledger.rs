@@ -34,7 +34,7 @@ fn create_ledger_file<'p>(ledger_file_path: &'p Path) -> Result<(), Error> {
         .write(true)
         .open(ledger_file_path)?;
 
-    println!("New ledger file created at: {:?}", ledger_file_path);
+    println!("New ledger file created at: {}", ledger_file_path.to_str().unwrap());
 
     Ok(())
 }
