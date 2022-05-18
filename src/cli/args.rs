@@ -16,12 +16,12 @@ impl GlobalArgs {
         match self.ledger_file.as_ref() {
             Some(path) => match path.exists() {
                 true => Ok(path.clone()),
-                false => Err(Error::ledger_file_not_found()),
+                false => Err(Error::ledger_file_not_found(path)),
             },
             None => Ok(dirs::data_local_dir()
                 .map(|dir| {
                     let mut dir = dir;
-                    dir.push(env!("CARGO_PKG_NAME"));
+                    dir.push(format!("{}/ledger.dat", env!("CARGO_PKG_NAME")));
                     dir
                 })
                 .unwrap()),
