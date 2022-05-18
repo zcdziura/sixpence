@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
 
-use super::{args::GlobalArgs, ledger::LedgerCommands};
+use super::{args::GlobalArgs};
 
 #[derive(Debug, Parser)]
 #[clap(about, author, version)]
@@ -24,7 +24,6 @@ impl Cli {
 
 #[derive(Debug, Subcommand)]
 pub enum Commands {
-    /// Commands to process the ledger
-    #[clap(subcommand)]
-    Ledger(LedgerCommands),
+	/// Create a new, empty ledger
+	New,
 }

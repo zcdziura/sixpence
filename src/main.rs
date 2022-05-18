@@ -1,13 +1,12 @@
 use std::process;
 
 use clap::Parser;
-use cli::Cli;
-
-use crate::cli::{process_ledger_commands, Commands};
+use cli::{Cli, Commands};
 
 mod cli;
 mod error;
 mod ledger;
+mod service;
 
 fn main() {
     let cli = Cli::parse();
@@ -21,9 +20,7 @@ fn main() {
     };
 
     let result = match cli.commands() {
-        Commands::Ledger(ledger_commands) => {
-            process_ledger_commands(ledger_commands, ledger_file_path.as_path())
-        }
+		Commands::New => service::ledger::create_new_ledger(ledger_file_path.as_path()),
     };
 
     if let Err(err) = result {
