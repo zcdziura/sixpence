@@ -6,7 +6,7 @@ use crate::error::Error;
 
 #[derive(Args, Debug)]
 pub struct GlobalArgs {
-    /// Specify an alternate ledger file
+    /// The path to the ledger file
     #[clap(short = 'f', long = "file", value_name = "PATH", value_hint = ValueHint::DirPath, global = true)]
     ledger_file: Option<PathBuf>,
 }
