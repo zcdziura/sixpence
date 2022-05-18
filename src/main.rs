@@ -21,6 +21,7 @@ fn main() {
 
     let result = match cli.commands() {
 		Commands::New => service::ledger::create_new_ledger(ledger_file_path.as_path()),
+		Commands::Accounts => Ok(())
     };
 
     if let Err(err) = result {

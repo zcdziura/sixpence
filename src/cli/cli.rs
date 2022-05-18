@@ -26,4 +26,8 @@ impl Cli {
 pub enum Commands {
 	/// Create a new, empty ledger
 	New,
+
+	/// Display accounts and their positions from the ledger
+	#[clap(name = "accts")]
+	Accounts
 }
