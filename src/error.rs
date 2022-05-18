@@ -1,14 +1,14 @@
-use std::{error, fmt, path::Path};
+use std::{error, fmt, path::PathBuf};
 
 use ErrorKind::*;
 
 #[derive(Debug)]
-pub struct Error<'p> {
-    kind: ErrorKind<'p>,
+pub struct Error {
+    kind: ErrorKind,
 }
 
-impl<'p> Error<'p> {
-    pub fn ledger_file_not_found(path: &'p Path) -> Self {
+impl Error {
+    pub fn ledger_file_not_found(path: PathBuf) -> Self {
         Self::new(LedgerFileNotFound(path))
     }
 
@@ -20,7 +20,7 @@ impl<'p> Error<'p> {
         Self::new(CorruptedLedgerFile)
     }
 
-    pub fn invalid_ledger_file(path: &'p Path) -> Self {
+    pub fn invalid_ledger_file(path: PathBuf) -> Self {
         Self::new(InvalidLedgerFile(path))
     }
 
@@ -28,12 +28,12 @@ impl<'p> Error<'p> {
         Self::new(Io(inner))
     }
 
-    fn new(kind: ErrorKind<'p>) -> Self {
+    fn new(kind: ErrorKind) -> Self {
         Self { kind }
     }
 }
 
-impl<'p> error::Error for Error<'p> {
+impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match &self.kind {
             BincodeError(err) => err.source(),
@@ -43,7 +43,7 @@ impl<'p> error::Error for Error<'p> {
     }
 }
 
-impl<'p> fmt::Display for Error<'p> {
+impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.kind {
             BincodeError(err) => write!(f, "{}", err),
@@ -55,25 +55,25 @@ impl<'p> fmt::Display for Error<'p> {
     }
 }
 
-impl<'p> From<std::io::Error> for Error<'p> {
+impl From<std::io::Error> for Error {
     fn from(error: std::io::Error) -> Self {
         Self::io(error)
     }
 }
 
-impl<'p> From<&std::io::Error> for Error<'p> {
+impl From<&std::io::Error> for Error {
     fn from(error: &std::io::Error) -> Self {
         Self::io(std::io::Error::from(error.kind()))
     }
 }
 
-impl<'p> From<bincode::Error> for Error<'p> {
+impl From<bincode::Error> for Error {
     fn from(error: bincode::Error) -> Self {
         Self::bincode(error)
     }
 }
 
-impl<'p> Into<i32> for Error<'p> {
+impl Into<i32> for Error {
     fn into(self) -> i32 {
         match self.kind {
             BincodeError(_) => 1,
@@ -86,10 +86,10 @@ impl<'p> Into<i32> for Error<'p> {
 }
 
 #[derive(Debug)]
-pub enum ErrorKind<'p> {
+pub enum ErrorKind {
     BincodeError(bincode::Error),
     CorruptedLedgerFile,
-    InvalidLedgerFile(&'p Path),
+    InvalidLedgerFile(PathBuf),
     Io(std::io::Error),
-    LedgerFileNotFound(&'p Path),
+    LedgerFileNotFound(PathBuf),
 }

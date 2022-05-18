@@ -5,8 +5,8 @@ use cli::{Cli, Commands};
 
 mod cli;
 mod error;
-mod ledger;
 mod service;
+mod transaction;
 
 fn main() {
     let cli = Cli::parse();
@@ -21,7 +21,7 @@ fn main() {
 
     let result = match cli.commands() {
 		Commands::New => service::ledger::create_new_ledger(ledger_file_path.as_path()),
-		Commands::Accounts => Ok(())
+		Commands::Accounts => service::ledger::read_ledger(ledger_file_path.as_path())
     };
 
     if let Err(err) = result {

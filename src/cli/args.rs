@@ -16,7 +16,7 @@ impl GlobalArgs {
         match self.ledger_file.as_ref() {
             Some(path) => match path.exists() {
                 true => Ok(path.clone()),
-                false => Err(Error::ledger_file_not_found(path)),
+                false => Err(Error::ledger_file_not_found(PathBuf::from(path))),
             },
             None => Ok(dirs::data_local_dir()
                 .map(|path| {
