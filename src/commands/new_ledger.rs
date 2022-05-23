@@ -1,8 +1,11 @@
-use std::{path::Path, fs::{DirBuilder, OpenOptions}};
+use std::{
+    fs::{DirBuilder, OpenOptions},
+    path::Path,
+};
 
 use crate::error::Error;
 
-pub fn create_new_ledger<'p>(ledger_file_path: &'p Path) -> Result<(), Error> {
+pub fn command<'p>(ledger_file_path: &'p Path) -> Result<(), Error> {
     let parent = ledger_file_path
         .parent()
         .ok_or(Error::invalid_ledger_file(ledger_file_path.to_owned()))?;
@@ -13,7 +16,10 @@ pub fn create_new_ledger<'p>(ledger_file_path: &'p Path) -> Result<(), Error> {
         .write(true)
         .open(ledger_file_path)?;
 
-    println!("New ledger file created at: {}", ledger_file_path.to_str().unwrap());
+    println!(
+        "New ledger file created at: {}",
+        ledger_file_path.to_str().unwrap()
+    );
 
     Ok(())
 }

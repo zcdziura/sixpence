@@ -1,5 +1,6 @@
-use std::{error, fmt, path::PathBuf};
+use std::{error, fmt, num::ParseIntError, path::PathBuf};
 
+use chrono::ParseError;
 use ErrorKind::*;
 
 #[derive(Debug)]
@@ -16,8 +17,20 @@ impl Error {
         Self::new(BincodeError(inner))
     }
 
+    pub fn blank_entry_value() -> Self {
+        Self::new(BlankEntryValue)
+    }
+
     pub fn corrupted_ledger_file() -> Self {
         Self::new(CorruptedLedgerFile)
+    }
+
+    pub fn invalid_entry_date(error: ParseError) -> Self {
+        Self::new(InvalidEntryDate(error))
+    }
+
+    pub fn invalid_entry_value(error: ParseIntError) -> Self {
+        Self::new(InvalidEntryValue(error))
     }
 
     pub fn invalid_ledger_file(path: PathBuf) -> Self {
@@ -26,6 +39,10 @@ impl Error {
 
     pub fn io(inner: std::io::Error) -> Self {
         Self::new(Io(inner))
+    }
+
+    pub fn unbalanced_transaction_entries() -> Self {
+        Self::new(UnbalancedTransactionEntries)
     }
 
     fn new(kind: ErrorKind) -> Self {
@@ -47,10 +64,14 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.kind {
             BincodeError(err) => write!(f, "{}", err),
+            BlankEntryValue => write!(f, "Entry has a blank value."),
             CorruptedLedgerFile => write!(f, "Ledger file contains corrupted data."),
-            InvalidLedgerFile(dir) => write!(f, "Invalid ledger directory: {:?}", dir),
+            InvalidEntryDate(date) => write!(f, "Invalid entry date: {}.", date),
+            InvalidEntryValue(value) => write!(f, "Invalid entry value: {}.", value),
+            InvalidLedgerFile(dir) => write!(f, "Invalid ledger directory: {:?}.", dir),
             Io(err) => write!(f, "{}", err),
             LedgerFileNotFound(path) => write!(f, "Ledger file not found at: {:?}.", path),
+            UnbalancedTransactionEntries => write!(f, "A transaction has unbalanced entries."),
         }
     }
 }
@@ -73,14 +94,30 @@ impl From<bincode::Error> for Error {
     }
 }
 
+impl From<ParseError> for Error {
+    fn from(other: ParseError) -> Self {
+        Self::invalid_entry_date(other)
+    }
+}
+
+impl From<ParseIntError> for Error {
+    fn from(other: ParseIntError) -> Self {
+        Self::invalid_entry_value(other)
+    }
+}
+
 impl Into<i32> for Error {
     fn into(self) -> i32 {
         match self.kind {
             BincodeError(_) => 1,
-            CorruptedLedgerFile => 2,
-            InvalidLedgerFile(_) => 3,
-            Io(_) => 4,
-            LedgerFileNotFound(_) => 5,
+            BlankEntryValue => 2,
+            CorruptedLedgerFile => 3,
+            InvalidEntryDate(_) => 4,
+            InvalidEntryValue(_) => 5,
+            InvalidLedgerFile(_) => 6,
+            Io(_) => 7,
+            LedgerFileNotFound(_) => 8,
+            UnbalancedTransactionEntries => 9,
         }
     }
 }
@@ -88,8 +125,12 @@ impl Into<i32> for Error {
 #[derive(Debug)]
 pub enum ErrorKind {
     BincodeError(bincode::Error),
+    BlankEntryValue,
     CorruptedLedgerFile,
+    InvalidEntryDate(ParseError),
+    InvalidEntryValue(ParseIntError),
     InvalidLedgerFile(PathBuf),
     Io(std::io::Error),
     LedgerFileNotFound(PathBuf),
+    UnbalancedTransactionEntries,
 }
