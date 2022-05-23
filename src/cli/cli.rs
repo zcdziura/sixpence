@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
 
-use super::{args::GlobalArgs};
+use super::{args::GlobalArgs, transaction::Transaction};
 
 #[derive(Debug, Parser)]
 #[clap(about, author, version)]
@@ -24,10 +24,14 @@ impl Cli {
 
 #[derive(Debug, Subcommand)]
 pub enum Commands {
-	/// Create a new, empty ledger
-	New,
+    /// Create a new, empty ledger
+    New,
 
-	/// Display accounts and their positions from the ledger
-	#[clap(name = "accts")]
-	Accounts
+    /// Display accounts and their positions from the ledger
+    #[clap(name = "accts")]
+    Accounts,
+
+    /// Create new transactions and add them to the ledger
+    #[clap(name = "txn")]
+    Transaction(Transaction),
 }

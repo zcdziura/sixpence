@@ -32,6 +32,7 @@ fn main() {
     let result = match cli.commands() {
         Commands::New => commands::new_ledger(ledger_file_path.as_path()),
         Commands::Accounts => commands::display_accounts(ledger_file_path.as_path()),
+        Commands::Transaction(_transaction_commands) => Ok(()),
     };
 
     if let Err(err) = result {
