@@ -1,6 +1,7 @@
 use std::{error, fmt, num::ParseIntError, path::PathBuf};
 
 use chrono::ParseError;
+use ulid::DecodeError;
 use ErrorKind::*;
 
 #[derive(Debug)]
@@ -25,8 +26,8 @@ impl Error {
         Self::new(CorruptedLedgerFile)
     }
 
-    pub fn invalid_entry_date(error: ParseError) -> Self {
-        Self::new(InvalidEntryDate(error))
+    pub fn invalid_entry_format(entry: &str) -> Self {
+        Self::new(InvalidEntryFormat(entry.to_owned()))
     }
 
     pub fn invalid_entry_value(error: ParseIntError) -> Self {
@@ -37,8 +38,24 @@ impl Error {
         Self::new(InvalidLedgerFile(path))
     }
 
+    pub fn invalid_transaction_date(error: ParseError) -> Self {
+        Self::new(InvalidTransactionDate(error))
+    }
+
+    pub fn invalid_transaction_id(error: DecodeError) -> Self {
+        Self::new(InvalidTransactionId(error))
+    }
+
     pub fn io(inner: std::io::Error) -> Self {
         Self::new(Io(inner))
+    }
+
+    pub fn missing_transaction_entries() -> Self {
+        Self::new(MissingTransactionEntries)
+    }
+
+    pub fn missing_transaction_field(field: &str) -> Self {
+        Self::new(MissingTransactionField(field.to_owned()))
     }
 
     pub fn unbalanced_transaction_entries() -> Self {
@@ -66,11 +83,21 @@ impl fmt::Display for Error {
             BincodeError(err) => write!(f, "{}", err),
             BlankEntryValue => write!(f, "Entry has a blank value."),
             CorruptedLedgerFile => write!(f, "Ledger file contains corrupted data."),
-            InvalidEntryDate(date) => write!(f, "Invalid entry date: {}.", date),
+            InvalidEntryFormat(entry) => write!(
+                f,
+                "Invalid entry transaction entry: '{}'. Must be in ACCOUNT=VALUE format.",
+                entry
+            ),
             InvalidEntryValue(value) => write!(f, "Invalid entry value: {}.", value),
             InvalidLedgerFile(dir) => write!(f, "Invalid ledger directory: {:?}.", dir),
+            InvalidTransactionDate(err) => write!(f, "{}", err),
+            InvalidTransactionId(err) => write!(f, "{}", err),
             Io(err) => write!(f, "{}", err),
             LedgerFileNotFound(path) => write!(f, "Ledger file not found at: {:?}.", path),
+            MissingTransactionEntries => write!(f, "Missing entries in transaction."),
+            MissingTransactionField(field) => {
+                write!(f, "Transaction is missing the following: {}.", field)
+            }
             UnbalancedTransactionEntries => write!(f, "A transaction has unbalanced entries."),
         }
     }
@@ -94,9 +121,15 @@ impl From<bincode::Error> for Error {
     }
 }
 
+impl From<DecodeError> for Error {
+    fn from(error: DecodeError) -> Self {
+        Self::invalid_transaction_id(error)
+    }
+}
+
 impl From<ParseError> for Error {
     fn from(other: ParseError) -> Self {
-        Self::invalid_entry_date(other)
+        Self::invalid_transaction_date(other)
     }
 }
 
@@ -112,12 +145,16 @@ impl Into<i32> for Error {
             BincodeError(_) => 1,
             BlankEntryValue => 2,
             CorruptedLedgerFile => 3,
-            InvalidEntryDate(_) => 4,
+            InvalidEntryFormat(_) => 4,
             InvalidEntryValue(_) => 5,
             InvalidLedgerFile(_) => 6,
-            Io(_) => 7,
-            LedgerFileNotFound(_) => 8,
-            UnbalancedTransactionEntries => 9,
+            InvalidTransactionDate(_) => 7,
+            InvalidTransactionId(_) => 8,
+            Io(_) => 9,
+            LedgerFileNotFound(_) => 10,
+            MissingTransactionEntries => 11,
+            MissingTransactionField(_) => 12,
+            UnbalancedTransactionEntries => 13,
         }
     }
 }
@@ -127,10 +164,14 @@ pub enum ErrorKind {
     BincodeError(bincode::Error),
     BlankEntryValue,
     CorruptedLedgerFile,
-    InvalidEntryDate(ParseError),
+    InvalidEntryFormat(String),
     InvalidEntryValue(ParseIntError),
     InvalidLedgerFile(PathBuf),
+    InvalidTransactionDate(ParseError),
+    InvalidTransactionId(DecodeError),
     Io(std::io::Error),
     LedgerFileNotFound(PathBuf),
+    MissingTransactionEntries,
+    MissingTransactionField(String),
     UnbalancedTransactionEntries,
 }

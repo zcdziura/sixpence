@@ -1,8 +1,8 @@
 use std::path::{Path, PathBuf};
 
-use crate::error::Error;
+use crate::{error::Error, services::read_transactions};
 
-use super::{read_transactions::read_transactions, reconcile_accounts::reconcile_accounts};
+use super::reconcile_accounts::reconcile_accounts;
 
 pub fn command<'p>(ledger_file_path: &'p Path) -> Result<(), Error> {
     if !ledger_file_path.exists() {
@@ -17,9 +17,8 @@ pub fn command<'p>(ledger_file_path: &'p Path) -> Result<(), Error> {
     let starting_padding = accounts
         .iter()
         .map(|account| account.name().len())
-        .reduce(|a, b| if a >= b { a } else { b })
-        .map(|len| len + 4)
-        .unwrap();
+        .fold(0, |a, b| if a >= b { a } else { b })
+        + 4;
 
     accounts.iter().for_each(|account| {
         println!(

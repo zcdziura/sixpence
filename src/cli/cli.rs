@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
 
-use super::{args::GlobalArgs, transaction::Transaction};
+use super::{args::GlobalArgs, transaction::TransactionOpts};
 
 #[derive(Debug, Parser)]
 #[clap(about, author, version)]
@@ -33,5 +33,5 @@ pub enum Commands {
 
     /// Create new transactions and add them to the ledger
     #[clap(name = "txn")]
-    Transaction(Transaction),
+    Transaction(TransactionOpts),
 }
