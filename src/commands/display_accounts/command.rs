@@ -40,7 +40,7 @@ pub fn command<'p>(ledger_file_path: &'p Path) -> Result<(), Error> {
 
     accounts.iter().for_each(|account| {
         println!(
-            "{:<first_width$}{:^second_width$}",
+            "{:.<first_width$}{:^second_width$}",
             account.name(),
             account.format_value_as_currency(),
             first_width = longest_account_length + 4,

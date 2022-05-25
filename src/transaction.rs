@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, ops::Neg};
 
 use chrono::{Date, NaiveDate, TimeZone, Utc};
 use getset::{CopyGetters, Getters};
@@ -52,19 +52,28 @@ impl TryFrom<&TransactionOpts> for Transaction {
     type Error = Error;
 
     fn try_from(opts: &TransactionOpts) -> Result<Self, Self::Error> {
-        if opts.entries().is_empty() {
-            Err(Error::missing_transaction_entries())
-        } else {
-            Ok(Self::new(
-                opts.date(),
-                Ulid::new(),
-                !opts.has_not_cleared(),
-                opts.description()
-                    .as_ref()
-                    .map(|desc| desc.to_owned())
-                    .unwrap_or_default(),
-                opts.entries().iter().map(Entry::from).collect(),
-            ))
+        match opts.entries().is_empty() {
+            true => Err(Error::missing_transaction_entries()),
+            false => {
+                let entries = validate_and_normalize_entries(
+                    opts.entries()
+                        .iter()
+                        .map(Entry::from)
+                        .collect::<Vec<Entry>>()
+                        .as_slice(),
+                )?;
+
+                Ok(Self::new(
+                    opts.date(),
+                    Ulid::new(),
+                    !opts.has_not_cleared(),
+                    opts.description()
+                        .as_ref()
+                        .map(|desc| desc.to_owned())
+                        .unwrap_or_default(),
+                    entries,
+                ))
+            }
         }
     }
 }
@@ -108,7 +117,7 @@ impl TryFrom<String> for Transaction {
             }
         }
 
-        let _ = validate_entries(entries.as_slice())?;
+        let _ = validate_and_normalize_entries(entries.as_slice())?;
 
         Ok(Self {
             id,
@@ -147,7 +156,7 @@ impl Display for Transaction {
     }
 }
 
-#[derive(CopyGetters, Debug, Default, Eq, Getters, PartialEq, Ord)]
+#[derive(Clone, CopyGetters, Debug, Default, Eq, Getters, PartialEq, Ord)]
 pub struct Entry {
     #[getset(get = "pub")]
     account: String,
@@ -156,17 +165,31 @@ pub struct Entry {
     value: isize,
 }
 
+impl Entry {
+    pub fn new(account: &str, value: isize) -> Self {
+        Self {
+            account: account.to_owned(),
+            value,
+        }
+    }
+}
+
 impl PartialOrd for Entry {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         self.account.partial_cmp(other.account())
     }
 }
 
-impl From<&(String, isize)> for Entry {
-    fn from((account, value): &(String, isize)) -> Self {
+impl From<&(String, Option<isize>)> for Entry {
+    fn from((account, value): &(String, Option<isize>)) -> Self {
+        let value = match value {
+            Some(value) => *value,
+            None => 0,
+        };
+
         Self {
             account: account.to_owned(),
-            value: *value,
+            value,
         }
     }
 }
@@ -205,23 +228,29 @@ impl Display for Entry {
     }
 }
 
-fn validate_entries(entries: &[Entry]) -> Result<(), Error> {
+fn validate_and_normalize_entries(entries: &[Entry]) -> Result<Vec<Entry>, Error> {
     let values = entries
         .iter()
         .map(|entry| entry.value())
         .collect::<Vec<isize>>();
 
     let has_multiple_blank_values = values.iter().filter(|&&value| value == 0).count() > 1;
-    let has_blank_entry = values.iter().any(|&value| value == 0);
-    let total_value = values.iter().sum::<isize>();
-
     if has_multiple_blank_values {
-        Err(Error::unbalanced_transaction_entries())
-    } else if has_blank_entry {
-        Err(Error::blank_entry_value())
-    } else if total_value != 0 {
-        Err(Error::unbalanced_transaction_entries())
-    } else {
-        Ok(())
+        return Err(Error::unbalanced_transaction_entries());
     }
+
+    let non_zero_values_sum = values.iter().filter(|&&value| value != 0).sum();
+    Ok(match non_zero_values_sum {
+        0 => entries.to_vec(),
+        _ => entries
+            .iter()
+            .map(|entry| {
+                if entry.value() == 0 {
+                    Entry::new(entry.account(), non_zero_values_sum.neg())
+                } else {
+                    entry.clone()
+                }
+            })
+            .collect::<Vec<Entry>>(),
+    })
 }

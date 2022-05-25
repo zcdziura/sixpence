@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
 
-use super::{args::GlobalArgs, transaction::TransactionOpts};
+use super::{args::GlobalArgs, transaction_opts::TransactionOpts};
 
 #[derive(Debug, Parser)]
 #[clap(about, author, version)]

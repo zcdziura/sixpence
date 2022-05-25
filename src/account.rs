@@ -13,7 +13,15 @@ pub struct Account {
 
 impl Account {
     pub fn format_value_as_currency(&self) -> String {
-        ACCOUNTING.format_money(self.value)
+        let padded_value = format!("{:0>width$}", self.value, width = 3);
+        let whole_part = &padded_value[..padded_value.len() - 2];
+        let decimal_part = &padded_value[padded_value.len() - 2..];
+
+        let value = format!("{}.{}", whole_part, decimal_part)
+            .parse::<f64>()
+            .unwrap();
+
+        ACCOUNTING.format_money(value)
     }
 }
 
