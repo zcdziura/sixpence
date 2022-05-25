@@ -5,7 +5,7 @@ description = "An accounting tool for hackers"
 authors = ["Z. Charles Dziura <zachary@dziura.email>"]
 edition = "2021"
 license = "BSD-3-Clause"
-publish = false
+publish = true
 
 [dependencies]
 accounting = "0.2.0"
