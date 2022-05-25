@@ -13,7 +13,7 @@ mod services;
 mod transaction;
 
 lazy_static! {
-    static ref ACCOUNTING: Accounting = Accounting::new_from("$", 2);
+    static ref ACCOUNTING: Accounting = Accounting::new("$", 2, ",", ".", "{v}", "({v})", "—");
 }
 
 fn main() {
