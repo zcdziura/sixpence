@@ -25,5 +25,7 @@ pub fn new_transaction<'p>(
 
     write_transactions(ledger_file_path, transactions.as_slice())?;
 
+	println!("New transaction added to the ledger.");
+
     Ok(())
 }

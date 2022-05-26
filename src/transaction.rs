@@ -55,12 +55,10 @@ impl TryFrom<&TransactionOpts> for Transaction {
         match opts.entries().is_empty() {
             true => Err(Error::missing_transaction_entries()),
             false => {
+
+
                 let entries = validate_and_normalize_entries(
-                    opts.entries()
-                        .iter()
-                        .map(Entry::from)
-                        .collect::<Vec<Entry>>()
-                        .as_slice(),
+                    opts.entries(),
                 )?;
 
                 Ok(Self::new(
@@ -116,8 +114,6 @@ impl TryFrom<String> for Transaction {
                 }
             }
         }
-
-        let _ = validate_and_normalize_entries(entries.as_slice())?;
 
         Ok(Self {
             id,
@@ -228,29 +224,45 @@ impl Display for Entry {
     }
 }
 
-fn validate_and_normalize_entries(entries: &[Entry]) -> Result<Vec<Entry>, Error> {
-    let values = entries
-        .iter()
-        .map(|entry| entry.value())
-        .collect::<Vec<isize>>();
+fn validate_and_normalize_entries(entries: &[(String, Option<isize>)]) -> Result<Vec<Entry>, Error> {
+	let entries = {
+		let number_of_entries_with_value = entries.iter().filter(|(_, value)| value.is_some()).count();
+		if number_of_entries_with_value == entries.len() && entries.len() > 1 {
+			entries.to_owned()
+		} else {
+			entries.to_owned().into_iter().chain(vec![("Equities:Starting Balances".to_owned(), None)]).collect()
+		}
+	};
 
-    let has_multiple_blank_values = values.iter().filter(|&&value| value == 0).count() > 1;
-    if has_multiple_blank_values {
-        return Err(Error::unbalanced_transaction_entries());
-    }
+    let values = entries.iter()
+		.map(|(_, value)| *value)
+		.collect::<Vec<Option<isize>>>();
 
-    let non_zero_values_sum = values.iter().filter(|&&value| value != 0).sum();
-    Ok(match non_zero_values_sum {
-        0 => entries.to_vec(),
+	let has_multiple_blank_values = values.iter().filter(|value| value.is_none()).count() > 1;
+	if has_multiple_blank_values {
+		return Err(Error::unbalanced_transaction_entries());
+	}
+
+
+    let non_zero_values_sum = values.iter().filter_map(|value| Some(value.unwrap_or(0))).sum();
+	let mut entries = match non_zero_values_sum {
+        0 => entries.iter().map(|(account, value)| Entry::new(account.as_str(), value.unwrap())).collect(),
         _ => entries
             .iter()
-            .map(|entry| {
-                if entry.value() == 0 {
-                    Entry::new(entry.account(), non_zero_values_sum.neg())
-                } else {
-                    entry.clone()
-                }
+            .map(|(account, value)| {
+				let value = value.unwrap_or(0);
+				Entry::new(
+					account.as_str(),
+					if value == 0 {
+						non_zero_values_sum.neg()
+					} else {
+						value
+					}
+				)
             })
             .collect::<Vec<Entry>>(),
-    })
+    };
+
+	entries.sort();
+    Ok(entries)
 }
