@@ -17,7 +17,6 @@ getset = "0.1.2"
 itertools = "0.10.3"
 lazy_static = "1.4.0"
 pad = "0.1"
-regex = "1.5.5"
 serde = { version = "1.0", features = ["derive", "rc", "std"] }
 ulid = { version = "0.5", features = ["serde", "std"] }
 
