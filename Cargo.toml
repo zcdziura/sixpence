@@ -1,6 +1,6 @@
 [package]
 name = "sixpence"
-version = "0.0.1"
+version = "0.0.2"
 description = "An accounting tool for hackers"
 authors = ["Z. Charles Dziura <zachary@dziura.email>"]
 edition = "2021"
