@@ -1,4 +1,4 @@
-use chrono::{Date, DateTime, Local, TimeZone, Utc};
+use chrono::{Date, NaiveDate, TimeZone, Utc};
 use clap::Args;
 use getset::{CopyGetters, Getters};
 use itertools::Itertools;
@@ -9,7 +9,7 @@ use crate::error::Error;
 pub struct TransactionOpts {
     /// Date of the transaction
     #[clap(short = 'D', long = "date", value_name = "YYYY-MM-DD", parse(try_from_str = parse_date))]
-    date: Option<Date<Local>>,
+    date: Option<Date<Utc>>,
 
     /// Mark transaction as not having cleared through the bank
     #[getset(get_copy = "pub")]
@@ -35,8 +35,12 @@ impl TransactionOpts {
     }
 }
 
-fn parse_date(s: &str) -> Result<Date<Local>, Error> {
-    Ok(DateTime::<Local>::from(DateTime::parse_from_str(s, "%Y-%m-%d")?).date())
+fn parse_date(s: &str) -> Result<Date<Utc>, Error> {
+    let date = Utc
+        .from_local_date(&NaiveDate::parse_from_str(s, "%Y-%m-%d")?)
+        .unwrap();
+
+    Ok(date)
 }
 
 fn parse_entries(s: &str) -> Result<(String, Option<isize>), Error> {
