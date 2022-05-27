@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
 
-use super::{args::GlobalArgs, transaction_opts::TransactionOpts};
+use super::{args::GlobalArgs, transaction_opts::TransactionOpts, AccountsOpts};
 
 #[derive(Debug, Parser)]
 #[clap(about, author, version)]
@@ -29,7 +29,7 @@ pub enum Commands {
 
     /// Display accounts and their positions from the ledger
     #[clap(name = "accts")]
-    Accounts,
+    Accounts(AccountsOpts),
 
     /// Create new transactions and add them to the ledger
     #[clap(name = "txn")]

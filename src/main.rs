@@ -29,7 +29,7 @@ fn main() {
 
     let result = match cli.commands() {
         Commands::New => commands::new_ledger(ledger_file_path.as_path()),
-        Commands::Accounts => commands::display_accounts(ledger_file_path.as_path()),
+        Commands::Accounts(opts) => commands::display_accounts(ledger_file_path.as_path(), opts),
         Commands::Transaction(opts) => commands::new_transaction(ledger_file_path.as_path(), opts),
     };
 

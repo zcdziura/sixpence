@@ -1,10 +1,10 @@
 use std::path::{Path, PathBuf};
 
-use crate::{error::Error, services::read_transactions};
+use crate::{account::Account, cli::AccountsOpts, error::Error, services::read_transactions};
 
 use super::reconcile_accounts::reconcile_accounts;
 
-pub fn command<'p>(ledger_file_path: &'p Path) -> Result<(), Error> {
+pub fn command<'p>(ledger_file_path: &'p Path, opts: &AccountsOpts) -> Result<(), Error> {
     if !ledger_file_path.exists() {
         return Err(Error::ledger_file_not_found(PathBuf::from(
             ledger_file_path,
@@ -17,7 +17,7 @@ pub fn command<'p>(ledger_file_path: &'p Path) -> Result<(), Error> {
         return Ok(());
     }
 
-    let accounts = reconcile_accounts(transactions.as_slice());
+    let accounts = filter_accounts(reconcile_accounts(transactions.as_slice()), opts);
 
     let (longest_account_length, longest_value_length) = accounts
         .iter()
@@ -54,4 +54,15 @@ pub fn command<'p>(ledger_file_path: &'p Path) -> Result<(), Error> {
     });
 
     Ok(())
+}
+
+fn filter_accounts(accounts: Vec<Account>, opts: &AccountsOpts) -> Vec<Account> {
+    if opts.display_all() {
+        accounts
+    } else {
+        accounts
+            .into_iter()
+            .filter(|account| account.name() != "Equities:Starting Balances")
+            .collect()
+    }
 }
