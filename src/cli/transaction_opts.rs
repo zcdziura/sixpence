@@ -8,7 +8,7 @@ use crate::error::Error;
 #[derive(Args, CopyGetters, Debug, Getters)]
 pub struct TransactionOpts {
     /// Date of the transaction
-    #[clap(short = 'd', long = "date", value_name = "YYYY-MM-DD", parse(try_from_str = parse_date))]
+    #[clap(short = 'D', long = "date", value_name = "YYYY-MM-DD", parse(try_from_str = parse_date))]
     date: Option<Date<Local>>,
 
     /// Mark transaction as not having cleared through the bank
@@ -18,7 +18,7 @@ pub struct TransactionOpts {
 
     /// Description of the transaction
     #[getset(get = "pub")]
-    #[clap(short = 'D', long = "desc", value_name = "DESCRIPTION")]
+    #[clap(short = 'd', long = "desc", value_name = "DESCRIPTION")]
     description: Option<String>,
 
     /// Transaction entries; only one entry may leave out its value
