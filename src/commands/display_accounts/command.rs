@@ -12,6 +12,11 @@ pub fn command<'p>(ledger_file_path: &'p Path) -> Result<(), Error> {
     }
 
     let transactions = read_transactions(ledger_file_path)?;
+    if transactions.is_empty() {
+        println!("No transactions found in the ledger.");
+        return Ok(());
+    }
+
     let accounts = reconcile_accounts(transactions.as_slice());
 
     let (longest_account_length, longest_value_length) = accounts
